@@ -3,7 +3,7 @@ const router = express.Router()
 const { Telegraf } = require('telegraf')
 const extra = require('telegraf/extra')
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
-const imagePath = '/static/'
+const imagePath = process.env.HEROKU_APP_URL + '/static/'
 
 const returnEditedComponents = (comps) => {
   return comps.map((item) => '- ' + item.name).join(',\n')
@@ -62,6 +62,7 @@ router.post('/figma', async (req, res) => {
 
   const sendImage = (file_key) => {
     if (Object.keys(FIGMA_FILE_NAMES).includes(file_key)) {
+      console.log(imagePath + FIGMA_FILE_NAMES[file_key])
       bot.telegram.sendPhoto(
         process.env.TELEGRAM_TARGET_CHANNEL_ID,
         imagePath + FIGMA_FILE_NAMES[file_key]
