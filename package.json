@@ -4,7 +4,8 @@
   "description": "Telegram bot for Consta public updates delivery ",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "keywords": [
     "figma",
