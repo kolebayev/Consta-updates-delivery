@@ -5,7 +5,7 @@ const express = require('express')
 require('dotenv').config()
 const bodyParser = require('body-parser')
 const app = express()
-const port = process.env.port || 3000
+const port = process.env.PORT || '8080'
 
 const figma = require('./modules/figma/figma')
 const github = require('./modules/github/github')
@@ -16,5 +16,5 @@ app.use('/', figma)
 app.use('/', github)
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+  console.log(`app listening at ${port}`)
 })
