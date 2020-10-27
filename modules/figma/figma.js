@@ -63,7 +63,7 @@ router.post('/figma', async (req, res) => {
   const sendImage = (file_key) => {
     if (Object.keys(FIGMA_FILE_NAMES).includes(file_key)) {
       console.log(imagePath + FIGMA_FILE_NAMES[file_key])
-      bot.telegram.sendPhoto(
+      bot.telegram.sendMessage(
         process.env.TELEGRAM_TARGET_CHANNEL_ID,
         imagePath + FIGMA_FILE_NAMES[file_key]
       )
