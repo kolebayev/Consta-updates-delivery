@@ -1,17 +1,23 @@
 const express = require('express')
 const router = express.Router()
-
 const { Telegraf } = require('telegraf')
 const extra = require('telegraf/extra')
-const TEST_BOT_TOKEN = '1394334012:AAEiuKc-Nvp-GqASCUW1QkoYkgru30D67LE'
-const TELEGRAM_CHANNEL_ID = '@constaupdates'
-const bot = new Telegraf(TEST_BOT_TOKEN)
-const tempURL = ''
-
-const FIGMA_775_HOOK_PASSCODE = 'consta-public-lib-updates-1mU9fjJOEC'
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
+const imagePath = process.env.HEROKU_APP_URL + '/static/'
 
 const returnEditedComponents = (comps) => {
   return comps.map((item) => '- ' + item.name).join(',\n')
+}
+
+const FIGMA_FILE_NAMES = {
+  FbMoYQEp4wAbaspkGSvcgt: 'testing-hooks.png',
+  v9Jkm2GrymD277dIGpRBSH: 'consta-ui-kit.png',
+  SLc0YGhuDotve6MTCBHlGxDU: 'consta-graphics.png',
+  nJiG1WdTWgqTd2RQc3ltv2: 'consta-default-spaces.png',
+  '4FOymgclcGF3Fm2M9ZeNUk': 'consta-default-typography.png',
+  NgRz8tesBgdad2Lv6kbWEe: 'consta-dark-colors.png',
+  vNZFtFH6w0IjD2Twi5OXXE: 'consta-default-colors.png',
+  CjGnwm0kwWkW9wSgwPirJA: 'consta-display-colors.png',
 }
 
 router.post('/figma', async (req, res) => {
@@ -24,21 +30,12 @@ router.post('/figma', async (req, res) => {
     triggered_by,
     event_type,
     description,
+    file_key,
   } = req.body
 
-  // console.log('req:', req.body)
-
-  if (
-    passcode === FIGMA_775_HOOK_PASSCODE &&
-    event_type === 'LIBRARY_PUBLISH'
-  ) {
-    await bot.telegram.sendPhoto(
-      TELEGRAM_CHANNEL_ID,
-      tempURL + '/static/consta-ui-kit.png'
-    )
-
-    await bot.telegram.sendMessage(
-      TELEGRAM_CHANNEL_ID,
+  const sendMessage = () => {
+    bot.telegram.sendMessage(
+      process.env.TELEGRAM_TARGET_CHANNEL_ID,
       `${
         triggered_by.handle
       } обновил(а) библиотеку *${file_name}*.\n${description}\n\n${
@@ -61,8 +58,45 @@ router.post('/figma', async (req, res) => {
       }`,
       extra.markdown()
     )
-    res.sendStatus(200)
-  } else if (passcode === FIGMA_775_HOOK_PASSCODE && event_type === 'PING') {
+  }
+
+  const sendImage = (file_key) => {
+    if (Object.keys(FIGMA_FILE_NAMES).includes(file_key)) {
+      bot.telegram.sendPhoto(
+        process.env.TELEGRAM_TARGET_CHANNEL_ID,
+        imagePath + FIGMA_FILE_NAMES[file_key]
+      )
+      return
+    }
+    return
+  }
+
+  if (
+    // проверка секретного кода для сесурности
+    passcode === process.env.FIGMA_775_HOOK_PASSCODE &&
+    // проверка, что сработал нужный хук
+    event_type === 'LIBRARY_PUBLISH'
+  ) {
+    // если дескрипшен приходит с -,
+    // то телега не постит сообщение в канал
+    // это ручной контроль
+    if (description !== '-') {
+      // отправляем картинку по названию
+      await sendImage(file_key)
+      // sendMessage()
+      setTimeout(sendMessage, 1000)
+      res.sendStatus(200)
+    } else {
+      // если мы не постим сообщение в телегу,
+      // фигме все равно нужно отправлять 200
+      // чтобы хук не заморозили
+      res.sendStatus(200)
+      console.log('message will not be sent due to description')
+    }
+  } else if (
+    passcode === process.env.FIGMA_775_HOOK_PASSCODE &&
+    event_type === 'PING'
+  ) {
     res.sendStatus(200)
   } else {
     res.sendStatus(400)
