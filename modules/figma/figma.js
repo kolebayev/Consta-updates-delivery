@@ -3,7 +3,7 @@ const router = express.Router()
 const { Telegraf } = require('telegraf')
 const extra = require('telegraf/extra')
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
-const imagePath = process.env.HEROKU_APP_URL + '/static/'
+const imagePath = '/static/'
 
 const returnEditedComponents = (comps) => {
   return comps.map((item) => '- ' + item.name).join(',\n')
