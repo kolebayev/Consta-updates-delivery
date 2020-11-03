@@ -61,16 +61,12 @@ router.post('/figma', async (req, res) => {
   }
 
   const sendImage = (file_key) => {
-    if (Object.keys(FIGMA_FILE_NAMES).includes(file_key)) {
-      console.log(imagePath + FIGMA_FILE_NAMES[file_key])
-      bot.telegram
-        .sendPhoto(
-          process.env.TELEGRAM_TARGET_CHANNEL_ID,
-          imagePath + FIGMA_FILE_NAMES[file_key]
-        )
-        .catch((err) => console.log(err))
-      return
-    }
+    bot.telegram
+      .sendPhoto(
+        process.env.TELEGRAM_TARGET_CHANNEL_ID,
+        imagePath + FIGMA_FILE_NAMES[file_key]
+      )
+      .catch((err) => console.log(err))
     return
   }
 
@@ -78,7 +74,9 @@ router.post('/figma', async (req, res) => {
     // проверка секретного кода для сесурности
     passcode === process.env.FIGMA_775_HOOK_PASSCODE &&
     // проверка, что сработал нужный хук
-    event_type === 'LIBRARY_PUBLISH'
+    event_type === 'LIBRARY_PUBLISH' &&
+    // проверка, что проект хука входит в список публичных
+    Object.keys(FIGMA_FILE_NAMES).includes(file_key) === true
   ) {
     // если дескрипшен приходит с -,
     // то телега не постит сообщение в канал
@@ -102,6 +100,7 @@ router.post('/figma', async (req, res) => {
   ) {
     res.sendStatus(200)
   } else {
+    console.log('err id')
     res.sendStatus(400)
   }
 })
