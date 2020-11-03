@@ -5,9 +5,8 @@ const extra = require('telegraf/extra')
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
 const imagePath = process.env.HEROKU_APP_URL + '/static/'
 
-const returnEditedComponents = (comps) => {
-  return comps.map((item) => '- ' + item.name).join(',\n')
-}
+const returnEditedComponents = (comps) =>
+  comps.map((item) => '- ' + item.name).join(',\n')
 
 const FIGMA_FILE_NAMES = {
   FbMoYQEp4wAbaspkGSvcgt: 'testing-hooks.png',
@@ -70,37 +69,30 @@ router.post('/figma', async (req, res) => {
     return
   }
 
-  if (
-    // проверка секретного кода для сесурности
-    passcode === process.env.FIGMA_775_HOOK_PASSCODE &&
-    // проверка, что сработал нужный хук
-    event_type === 'LIBRARY_PUBLISH' &&
-    // проверка, что проект хука входит в список публичных
-    Object.keys(FIGMA_FILE_NAMES).includes(file_key) === true
-  ) {
-    // если дескрипшен приходит с -,
-    // то телега не постит сообщение в канал
-    // это ручной контроль
-    if (description !== '-') {
-      // отправляем картинку по названию
-      await sendImage(file_key)
-      // sendMessage()
-      setTimeout(sendMessage, 1000)
+  if (passcode === process.env.FIGMA_775_HOOK_PASSCODE) {
+    // https://www.figma.com/developers/api#webhooks-v2-events
+    // пинг шлет сама фигма, обрабатывать не нужно
+    // только ответ 200, что сервак крутится
+    if (event_type === 'PING') {
+      console.log('PING_EVENT')
       res.sendStatus(200)
-    } else {
-      // если мы не постим сообщение в телегу,
-      // фигме все равно нужно отправлять 200
-      // чтобы хук не заморозили
-      res.sendStatus(200)
-      console.log('message will not be sent due to description')
     }
-  } else if (
-    passcode === process.env.FIGMA_775_HOOK_PASSCODE &&
-    event_type === 'PING'
-  ) {
-    res.sendStatus(200)
+    // обрабатываем только этот тип событий
+    if (event_type === 'LIBRARY_PUBLISH') {
+      // шлем сообщения только для публичных
+      // проектов из комьюнити Консты
+      if (Object.keys(FIGMA_FILE_NAMES).includes(file_key)) {
+        await sendImage(file_key)
+        setTimeout(sendMessage, 500)
+      }
+      // 200 на любые хуки публикаций
+      // иначе хук отключается
+      res.sendStatus(200)
+    }
   } else {
-    console.log('err id')
+    // https://www.figma.com/developers/api#webhooks-v2-security
+    // если паскод неверный
+    console.log('PASSCODE_ERROR')
     res.sendStatus(400)
   }
 })
