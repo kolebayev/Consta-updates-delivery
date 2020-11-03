@@ -32,29 +32,39 @@ router.post('/figma', async (req, res) => {
     file_key,
   } = req.body
 
+  const descriptionConfig = {
+    noPost: description.includes('#nopost#'),
+    onlyDescription: description.includes('#onlydescription#'),
+  }
+
   const sendMessage = () => {
     bot.telegram.sendMessage(
       process.env.TELEGRAM_TARGET_CHANNEL_ID,
-      `${
-        triggered_by.handle
-      } обновил(а) библиотеку *${file_name}*.\n${description}\n\n${
-        modified_components.length != 0
-          ? '✏️ *Измененные компоненты:*\n' +
-            returnEditedComponents(modified_components) +
-            '\n\n\n'
-          : ''
-      }${
-        created_components.length != 0
-          ? '💫 *Новые компоненты:*\n' +
-            returnEditedComponents(created_components) +
-            '\n\n\n'
-          : ''
-      }${
-        deleted_components.length != 0
-          ? '🗑️ *Удаленные компоненты:*\n' +
-            returnEditedComponents(deleted_components)
-          : ''
-      }`,
+      descriptionConfig.onlyDescription === true
+        ? `${triggered_by.handle} обновил(а) библиотеку *${file_name}*.\n${description}`.replace(
+            '#onlydescription#',
+            ''
+          )
+        : `${
+            triggered_by.handle
+          } обновил(а) библиотеку *${file_name}*.\n${description}\n\n${
+            modified_components.length != 0
+              ? '✏️ *Измененные компоненты:*\n' +
+                returnEditedComponents(modified_components) +
+                '\n\n\n'
+              : ''
+          }${
+            created_components.length != 0
+              ? '💫 *Новые компоненты:*\n' +
+                returnEditedComponents(created_components) +
+                '\n\n\n'
+              : ''
+          }${
+            deleted_components.length != 0
+              ? '🗑️ *Удаленные компоненты:*\n' +
+                returnEditedComponents(deleted_components)
+              : ''
+          }`,
       extra.markdown()
     )
   }
@@ -82,8 +92,11 @@ router.post('/figma', async (req, res) => {
       // шлем сообщения только для публичных
       // проектов из комьюнити Консты
       if (Object.keys(FIGMA_FILE_NAMES).includes(file_key)) {
-        await sendImage(file_key)
-        setTimeout(sendMessage, 500)
+        // проверяем конфиг на параметр noPost
+        if (descriptionConfig.noPost === false) {
+          await sendImage(file_key)
+          setTimeout(sendMessage, 500)
+        }
       }
       // 200 на любые хуки публикаций
       // иначе хук отключается
