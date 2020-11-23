@@ -1,12 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const { Telegraf } = require('telegraf')
-const extra = require('telegraf/extra')
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
 const imagePath = process.env.HEROKU_APP_URL + '/static/'
-
-const returnEditedComponents = (comps) =>
-  comps.map((item) => '- ' + item.name).join(',\n')
 
 const FIGMA_FILE_NAMES = {
   FbMoYQEp4wAbaspkGSvcgt: 'testing-hooks.png',
@@ -22,62 +18,14 @@ const FIGMA_FILE_NAMES = {
 router.post('/figma', async (req, res) => {
   const {
     file_name,
-    modified_components,
-    created_components,
-    deleted_components,
     passcode,
     triggered_by,
     event_type,
     description,
     file_key,
+    timestamp,
+    modified_components,
   } = req.body
-
-  const descriptionConfig = {
-    noPost: description.includes('#nopost#'),
-    onlyDescription: description.includes('#onlydescription#'),
-  }
-
-  const sendMessage = () => {
-    bot.telegram.sendMessage(
-      process.env.TELEGRAM_TARGET_CHANNEL_ID,
-      descriptionConfig.onlyDescription === true
-        ? `${triggered_by.handle} обновил(а) библиотеку *${file_name}*.\n${description}`.replace(
-            '#onlydescription#',
-            ''
-          )
-        : `${
-            triggered_by.handle
-          } обновил(а) библиотеку *${file_name}*.\n${description}\n\n${
-            modified_components.length != 0
-              ? '✏️ *Измененные компоненты:*\n' +
-                returnEditedComponents(modified_components) +
-                '\n\n\n'
-              : ''
-          }${
-            created_components.length != 0
-              ? '💫 *Новые компоненты:*\n' +
-                returnEditedComponents(created_components) +
-                '\n\n\n'
-              : ''
-          }${
-            deleted_components.length != 0
-              ? '🗑️ *Удаленные компоненты:*\n' +
-                returnEditedComponents(deleted_components)
-              : ''
-          }`,
-      extra.markdown()
-    )
-  }
-
-  const sendImage = (file_key) => {
-    bot.telegram
-      .sendPhoto(
-        process.env.TELEGRAM_TARGET_CHANNEL_ID,
-        imagePath + FIGMA_FILE_NAMES[file_key]
-      )
-      .catch((err) => console.log(err))
-    return
-  }
 
   if (passcode === process.env.FIGMA_775_HOOK_PASSCODE) {
     // https://www.figma.com/developers/api#webhooks-v2-events
@@ -91,11 +39,27 @@ router.post('/figma', async (req, res) => {
     if (event_type === 'LIBRARY_PUBLISH') {
       // шлем сообщения только для публичных
       // проектов из комьюнити Консты
-      if (Object.keys(FIGMA_FILE_NAMES).includes(file_key)) {
+      if (
+        Object.keys(FIGMA_FILE_NAMES).includes(file_key) &&
+        modified_components.length != 0
+      ) {
         // проверяем конфиг на параметр noPost
-        if (descriptionConfig.noPost === false) {
-          await sendImage(file_key)
-          setTimeout(sendMessage, 500)
+        if (description.includes('#nopost#') === false) {
+          bot.telegram
+            .sendPhoto(
+              process.env.TELEGRAM_TARGET_CHANNEL_ID,
+              imagePath + FIGMA_FILE_NAMES[file_key],
+              {
+                caption: `${triggered_by.handle} обновил(а) библиотеку *${file_name}*.\n\n${description}`,
+                parse_mode: 'Markdown',
+              }
+            )
+            .catch((err) =>
+              console.log(
+                `SEND PHOTO WITH CAPTION FAILED // ${timestamp} //  `,
+                err
+              )
+            )
         }
       }
       // 200 на любые хуки публикаций
