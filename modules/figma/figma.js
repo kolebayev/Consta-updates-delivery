@@ -25,6 +25,7 @@ router.post('/figma', async (req, res) => {
     file_key,
     timestamp,
     modified_components,
+    retries,
   } = req.body
 
   if (passcode === process.env.FIGMA_775_HOOK_PASSCODE) {
@@ -50,7 +51,7 @@ router.post('/figma', async (req, res) => {
               process.env.TELEGRAM_TARGET_CHANNEL_ID,
               imagePath + FIGMA_FILE_NAMES[file_key],
               {
-                caption: `${triggered_by.handle} обновил(а) библиотеку *${file_name}*.\n\n${description}`,
+                caption: `${triggered_by.handle} обновил(а) библиотеку *${file_name}*.\n\n${description}\n\nr: ${retries}, ${timestamp}`,
                 parse_mode: 'Markdown',
               }
             )
