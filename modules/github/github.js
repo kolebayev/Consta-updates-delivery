@@ -1,3 +1,4 @@
+const { text } = require('body-parser')
 const request = require('request')
 const { Telegraf } = require('telegraf')
 
@@ -8,6 +9,7 @@ const githubReleaseUrl =
   'https://github.com/gazprom-neft/consta-uikit/releases/tag/'
 const chandgeLogUrl =
   'https://raw.githubusercontent.com/gazprom-neft/consta-uikit/master/CHANGELOG.md'
+const chatId = process.env.TELEGRAM_TARGET_GITHUB_CHANNEL_ID
 
 const getReleaseBody = (release) => {
   return release
@@ -31,7 +33,7 @@ module.exports = function (app, client) {
       const [version, date] = getVersion(lastReliase)
       const reliaseBody = getReleaseBody(lastReliase)
 
-      const caption = `v${version} (${date}) \n\n ${reliaseBody} [read more...](${githubReleaseUrl}v${version})`
+      const text = `New version has been released\n **v${version} (${date})**\n\n Changelog:\n ${reliaseBody} [open in GitHub](${githubReleaseUrl}v${version})`
 
       db.collection('versions').findOne({ version }, (err, item) => {
         if (err) {
@@ -40,25 +42,24 @@ module.exports = function (app, client) {
         } else {
           if (item === null) {
             bot.telegram
-              .sendPhoto(
-                process.env.TELEGRAM_TARGET_GITHUB_CHANNEL_ID,
-                imagePath,
-                {
-                  caption,
-                  parse_mode: 'Markdown',
-                }
-              )
+              .sendPhoto(chatId, imagePath, { disable_notification: true })
               .then(() => {
-                db.collection('versions').insert(
-                  { version, date },
-                  (err, result) => {
-                    if (err) {
-                      console.error(err)
-                    } else {
-                      console.log(`DB updated - v${version}`)
-                    }
-                  }
-                )
+                bot.telegram
+                  .sendMessage(chatId, text, {
+                    parse_mode: 'Markdown',
+                    disable_web_page_preview: true,
+                  })
+                  .then(
+                    db
+                      .collection('versions')
+                      .insert({ version, date }, (err, result) => {
+                        if (err) {
+                          console.error(err)
+                        } else {
+                          console.log(`DB updated - v${version}`)
+                        }
+                      })
+                  )
               })
               .catch((err) =>
                 console.error(
