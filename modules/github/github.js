@@ -33,7 +33,7 @@ module.exports = function (app, client) {
       const [version, date] = getVersion(lastReliase)
       const reliaseBody = getReleaseBody(lastReliase)
 
-      const text = `New version has been released\n **v${version} (${date})**\n\n Changelog:\n ${reliaseBody} [open in GitHub](${githubReleaseUrl}v${version})`
+      const text = `New version has been released\n**v${version} (${date})**\n\nChangelog:\n${reliaseBody}[open in GitHub](${githubReleaseUrl}v${version})`
 
       db.collection('versions').findOne({ version }, (err, item) => {
         if (err) {
