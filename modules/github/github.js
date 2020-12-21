@@ -3,7 +3,7 @@ const request = require('request')
 const { Telegraf } = require('telegraf')
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_GITHUB_TOKEN)
-const imagePath = process.env.HEROKU_APP_URL + '/static/consta-ui-kit.png'
+const imagePath = process.env.HEROKU_APP_URL + '/static/package-release.jpg'
 const versionReg = /\#\#\ v([0-9]+\.[0-9]+\.[0-9]+)\ \(([0-9]+\/.[0-9]+\/[0-9]+)\)/m
 const githubReleaseUrl =
   'https://github.com/gazprom-neft/consta-uikit/releases/tag/'
@@ -33,7 +33,7 @@ module.exports = function (app, client) {
       const [version, date] = getVersion(lastReliase)
       const reliaseBody = getReleaseBody(lastReliase)
 
-      const text = `New version has been released\n**v${version} (${date})**\n\nChangelog:\n${reliaseBody}[open in GitHub](${githubReleaseUrl}v${version})`
+      const text = `Новая версия\n**v${version} (${date})**\n\nСписок изменений:\n${reliaseBody}[открыть в GitHub](${githubReleaseUrl}v${version})`
 
       db.collection('versions').findOne({ version }, (err, item) => {
         if (err) {
