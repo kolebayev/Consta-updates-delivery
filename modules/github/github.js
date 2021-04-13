@@ -5,11 +5,16 @@ const { Telegraf } = require('telegraf')
 const bot = new Telegraf(process.env.TELEGRAM_BOT_GITHUB_TOKEN)
 const imagePath = process.env.HEROKU_APP_URL + '/static/package-release.jpg'
 const versionReg = /\#\#\ v([0-9]+\.[0-9]+\.[0-9]+)\ \(([0-9]+\/.[0-9]+\/[0-9]+)\)/m
-const githubReleaseUrl =
-  'https://github.com/gazprom-neft/consta-uikit/releases/tag/'
-const chandgeLogUrl =
-  'https://raw.githubusercontent.com/gazprom-neft/consta-uikit/master/CHANGELOG.md'
+
+const githubUrl = 'https://github.com'
+const githubRawUrl = 'https://raw.githubusercontent.com'
+const widgetsRepo = 'gazprom-neft/consta-widgets-new'
+const constaRepo = 'gazprom-neft/consta-uikit'
+
 const chatId = process.env.TELEGRAM_TARGET_GITHUB_CHANNEL_ID
+
+const getReleasesUrl = (repo) => `${githubUrl}/${repo}/releases/tag/`
+const getChanglogUrl = (repo) => `${githubRawUrl}/${repo}/master/CHANGELOG.md`
 
 const getReleaseBody = (release) => {
   return release
@@ -23,55 +28,65 @@ const getVersion = (release) => {
   return [version, date]
 }
 
-module.exports = function (app, client) {
+const sendReleaseMessage = (repo, dbName, libName, { req, res }) => {
   const db = client.db('constaTelegramBot')
-  app.get('/github', (req, res) => {
-    request(chandgeLogUrl, (err, response, body) => {
-      if (err) return res.status(500).send({ message: err })
+  const releaseUrl = getReleasesUrl(repo)
+  const chandgeLogUrl = getChanglogUrl(repo)
 
-      const lastReliase = body.split('---')[0]
-      const [version, date] = getVersion(lastReliase)
-      const reliaseBody = getReleaseBody(lastReliase)
+  request(chandgeLogUrl, (err, response, body) => {
+    if (err) return res.status(500).send({ message: err })
 
-      const text = `Новая версия\n**v${version} (${date})**\n\nСписок изменений:\n${reliaseBody}[открыть в GitHub](${githubReleaseUrl}v${version})`
+    const lastReliase = body.split('---')[0]
+    const [version, date] = getVersion(lastReliase)
+    const reliaseBody = getReleaseBody(lastReliase)
 
-      db.collection('versions').findOne({ version }, (err, item) => {
-        if (err) {
-          console.error(err)
-          return
-        } else {
-          if (item === null) {
-            bot.telegram
-              .sendPhoto(chatId, imagePath, { disable_notification: true })
-              .then(() => {
-                bot.telegram
-                  .sendMessage(chatId, text, {
-                    parse_mode: 'Markdown',
-                    disable_web_page_preview: true,
-                  })
-                  .then(
-                    db
-                      .collection('versions')
-                      .insert({ version, date }, (err, result) => {
-                        if (err) {
-                          console.error(err)
-                        } else {
-                          console.log(`DB updated - v${version}`)
-                        }
-                      })
-                  )
-              })
-              .catch((err) =>
-                console.error(
-                  `SEND PHOTO WITH CAPTION FAILED // ${req.body.timestamp} //  `,
-                  err
+    const text = `Новая версия ${libName}\n**v${version} (${date})**\n\nСписок изменений:\n${reliaseBody}[открыть в GitHub](${releaseUrl}v${version})`
+
+    db.collection(dbName).findOne({ version }, (err, item) => {
+      if (err) {
+        console.error(err)
+        return
+      } else {
+        if (item === null) {
+          bot.telegram
+            .sendPhoto(chatId, imagePath, { disable_notification: true })
+            .then(() => {
+              bot.telegram
+                .sendMessage(chatId, text, {
+                  parse_mode: 'Markdown',
+                  disable_web_page_preview: true,
+                })
+                .then(
+                  db
+                    .collection(dbName)
+                    .insert({ version, date }, (err, result) => {
+                      if (err) {
+                        console.error(err)
+                      } else {
+                        console.log(`DB updated - v${version}`)
+                      }
+                    })
                 )
+            })
+            .catch((err) =>
+              console.error(
+                `SEND PHOTO WITH CAPTION FAILED // ${req.body.timestamp} //  `,
+                err
               )
-          }
+            )
         }
-      })
-
-      return res.send(version)
+      }
     })
+
+    return res.send(version)
   })
+}
+
+module.exports = function (app, client) {
+  app.get('/github', (req, res) =>
+    sendReleaseMessage(constaRepo, 'versions', 'ui-kit', { req, res })
+  )
+  app.get('/github-widgets', (req, res) =>
+    sendReleaseMessage(constaRepo, 'widgets-versions', 'widgets', { req, res })
+  )
 }
