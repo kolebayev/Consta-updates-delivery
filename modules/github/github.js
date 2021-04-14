@@ -28,7 +28,7 @@ const getVersion = (release) => {
   return [version, date]
 }
 
-const sendReleaseMessage = (repo, dbName, libName, { req, res }) => {
+const sendReleaseMessage = (repo, dbName, libName, { req, res, client }) => {
   const db = client.db('constaTelegramBot')
   const releaseUrl = getReleasesUrl(repo)
   const chandgeLogUrl = getChanglogUrl(repo)
@@ -40,7 +40,7 @@ const sendReleaseMessage = (repo, dbName, libName, { req, res }) => {
     const [version, date] = getVersion(lastReliase)
     const reliaseBody = getReleaseBody(lastReliase)
 
-    const text = `Новая версия ${libName}\n**v${version} (${date})**\n\nСписок изменений:\n${reliaseBody}[открыть в GitHub](${releaseUrl}v${version})`
+    const text = `Новая версия **${libName}**\n**v${version} (${date})**\n\nСписок изменений:\n${reliaseBody}[открыть в GitHub](${releaseUrl}v${version})`
 
     db.collection(dbName).findOne({ version }, (err, item) => {
       if (err) {
@@ -84,9 +84,17 @@ const sendReleaseMessage = (repo, dbName, libName, { req, res }) => {
 
 module.exports = function (app, client) {
   app.get('/github', (req, res) =>
-    sendReleaseMessage(constaRepo, 'versions', 'ui-kit', { req, res })
+    sendReleaseMessage(constaRepo, 'versions', 'consta-uikit', {
+      req,
+      res,
+      client,
+    })
   )
   app.get('/github-widgets', (req, res) =>
-    sendReleaseMessage(constaRepo, 'widgets-versions', 'widgets', { req, res })
+    sendReleaseMessage(widgetsRepo, 'widgets-versions', 'consta-widgets', {
+      req,
+      res,
+      client,
+    })
   )
 }
