@@ -28,6 +28,30 @@ const getVersion = (release) => {
   return [version, date]
 }
 
+const getLastReliase = (body) => body.split('---')[0]
+
+const getTextMessage = (libName, version, date, reliaseBody, releaseUrl) => {
+  const header = `Новая версия **${libName}**\n**v${version} (${date})**\n\nСписок изменений:\n`
+  const footer = `\n[открыть в GitHub](${releaseUrl}v${version})`
+  const commits = reliaseBody.split('\n').filter((item) => item.length)
+
+  let text = `${header}`
+
+  for (let i = 0; i < commits.length; i++) {
+    const string = `${commits[i]}\n`
+
+    if (text.length + string.length + footer.length <= 4090) {
+      text += string
+    } else {
+      break
+    }
+  }
+
+  text += footer
+
+  return text
+}
+
 const sendReleaseMessage = (repo, dbName, libName, { req, res, client }) => {
   const db = client.db('constaTelegramBot')
   const releaseUrl = getReleasesUrl(repo)
@@ -36,11 +60,10 @@ const sendReleaseMessage = (repo, dbName, libName, { req, res, client }) => {
   request(chandgeLogUrl, (err, response, body) => {
     if (err) return res.status(500).send({ message: err })
 
-    const lastReliase = body.split('---')[0]
+    const lastReliase = getLastReliase(body)
     const [version, date] = getVersion(lastReliase)
     const reliaseBody = getReleaseBody(lastReliase)
-
-    const text = `Новая версия **${libName}**\n**v${version} (${date})**\n\nСписок изменений:\n${reliaseBody}[открыть в GitHub](${releaseUrl}v${version})`
+    const text = getTextMessage(libName, version, date, reliaseBody, releaseUrl)
 
     db.collection(dbName).findOne({ version }, (err, item) => {
       if (err) {
