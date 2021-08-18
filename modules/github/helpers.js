@@ -59,8 +59,6 @@ const getTextMessage = (libName, version, date, body, releaseUrl) => {
 
   text += footer
 
-  console.log(text)
-
   return text
 }
 
