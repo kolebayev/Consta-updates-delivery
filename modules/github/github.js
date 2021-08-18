@@ -15,6 +15,7 @@ const imagePath = process.env.HEROKU_APP_URL + '/static/package-release.jpg'
 const githubUrl = 'https://github.com'
 const githubRawUrl = 'https://raw.githubusercontent.com'
 const widgetsRepo = 'gazprom-neft/consta-widgets-new'
+const chartsRepo = 'gazprom-neft/consta-charts'
 const constaRepo = 'gazprom-neft/consta-uikit'
 
 const chatId = process.env.TELEGRAM_TARGET_GITHUB_CHANNEL_ID
@@ -91,15 +92,10 @@ module.exports = function (app, client) {
     })
   )
   app.get('/github-charts', (req, res) =>
-    sendReleaseMessage(
-      widgetsRepo,
-      'consta-charts-versions',
-      '@consta/charts',
-      {
-        req,
-        res,
-        client,
-      }
-    )
+    sendReleaseMessage(chartsRepo, 'consta-charts-versions', '@consta/charts', {
+      req,
+      res,
+      client,
+    })
   )
 }
