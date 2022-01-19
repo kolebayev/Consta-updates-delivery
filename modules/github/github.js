@@ -14,8 +14,9 @@ const imagePath = process.env.HEROKU_APP_URL + '/static/package-release.jpg'
 
 const githubUrl = 'https://github.com'
 const githubRawUrl = 'https://raw.githubusercontent.com'
-const chartsRepo = 'gazprom-neft/consta-charts'
-const constaRepo = 'gazprom-neft/consta-uikit'
+const organization = 'consta-design-system'
+const chartsRepo = `${organization}/consta-charts`
+const constaRepo = `${organization}/consta-uikit`
 
 const chatId = process.env.TELEGRAM_TARGET_GITHUB_CHANNEL_ID
 
