@@ -62,6 +62,20 @@ const getTextMessage = (libName, version, date, body, releaseUrl) => {
   return text
 }
 
+const githubUrl = 'https://github.com'
+const githubRawUrl = 'https://raw.githubusercontent.com'
+const organization = 'consta-design-system'
+
+const chatId = process.env.TELEGRAM_TARGET_GITHUB_CHANNEL_ID
+
+const image = (name) => process.env.HEROKU_APP_URL + `/static/${name}.png`
+const repo = (name) => `${organization}/${name}`
+const npm = (name) => `@consta/${name}`
+const url = (name) => `/package-${name}`
+const db = (name) => `consta-${name}-versions`
+const getReleasesUrl = (repo) => `${githubUrl}/${repo}/releases/tag/`
+const getChanglogUrl = (repo) => `${githubRawUrl}/${repo}/master/CHANGELOG.md`
+
 module.exports = {
   releaseSeparator,
   changeLogSeparator,
@@ -69,4 +83,12 @@ module.exports = {
   getTextMessage,
   getReleaseBody,
   getVersion,
+  image,
+  repo,
+  chatId,
+  getReleasesUrl,
+  getChanglogUrl,
+  npm,
+  url,
+  db,
 }

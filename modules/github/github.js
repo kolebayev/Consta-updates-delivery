@@ -7,23 +7,35 @@ const {
   getReleaseBody,
   getVersion,
   getTextMessage,
+  image,
+  chatId,
+  getReleasesUrl,
+  getChanglogUrl,
+  npm,
+  repo,
+  url,
+  db,
 } = require('./helpers')
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_GITHUB_TOKEN)
-const imagePath = process.env.HEROKU_APP_URL + '/static/package-release.jpg'
 
-const githubUrl = 'https://github.com'
-const githubRawUrl = 'https://raw.githubusercontent.com'
-const organization = 'consta-design-system'
-const chartsRepo = `${organization}/consta-charts`
-const constaRepo = `${organization}/consta-uikit`
+const repos = [
+  'uikit',
+  'charts',
+  'header',
+  'rc-tree-adapter',
+  'rc-table-adapter',
+  'analytic-ui',
+  'stats',
+]
 
-const chatId = process.env.TELEGRAM_TARGET_GITHUB_CHANNEL_ID
-
-const getReleasesUrl = (repo) => `${githubUrl}/${repo}/releases/tag/`
-const getChanglogUrl = (repo) => `${githubRawUrl}/${repo}/master/CHANGELOG.md`
-
-const sendReleaseMessage = (repo, dbName, libName, { req, res, client }) => {
+const sendReleaseMessage = (
+  repo,
+  dbName,
+  libName,
+  image,
+  { req, res, client }
+) => {
   const db = client.db('constaTelegramBot')
   const releaseUrl = getReleasesUrl(repo)
   const chandgeLogUrl = getChanglogUrl(repo)
@@ -43,7 +55,7 @@ const sendReleaseMessage = (repo, dbName, libName, { req, res, client }) => {
       } else {
         if (item === null) {
           bot.telegram
-            .sendPhoto(chatId, imagePath, { disable_notification: true })
+            .sendPhoto(chatId, image, { disable_notification: true })
             .then(() => {
               bot.telegram
                 .sendMessage(chatId, text, {
@@ -77,19 +89,13 @@ const sendReleaseMessage = (repo, dbName, libName, { req, res, client }) => {
 }
 
 module.exports = function (app, client) {
-  app.get('/github', (req, res) =>
-    sendReleaseMessage(constaRepo, 'versions', '@consta/uikit', {
-      req,
-      res,
-      client,
-    })
-  )
-
-  app.get('/github-charts', (req, res) =>
-    sendReleaseMessage(chartsRepo, 'consta-charts-versions', '@consta/charts', {
-      req,
-      res,
-      client,
-    })
-  )
+  repos.forEach((name) => {
+    app.get(url(name), (req, res) =>
+      sendReleaseMessage(repo(name), db(name), npm(name), image(name), {
+        req,
+        res,
+        client,
+      })
+    )
+  })
 }
