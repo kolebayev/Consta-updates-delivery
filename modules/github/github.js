@@ -27,6 +27,7 @@ const repos = [
   'rc-table-adapter',
   'analytic-ui',
   'stats',
+  'gantt-task-react-adapter',
 ]
 
 const sendReleaseMessage = (
