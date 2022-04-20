@@ -28,6 +28,7 @@ const repos = [
   'analytic-ui',
   'stats',
   'gantt-task-react-adapter',
+  'ag-grid-adapter',
 ]
 
 const sendReleaseMessage = (
