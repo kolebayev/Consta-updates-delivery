@@ -1,6 +1,6 @@
 {
   "name": "consta-design-system-telegram-bot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Telegram bot for Consta public updates delivery ",
   "main": "index.js",
   "scripts": {
